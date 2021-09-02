@@ -15,11 +15,11 @@ public class Character : MonoBehaviour
     [Space(2)]
     [Tooltip("Speed value between 1 and 6.")]
     [Range(1.0f, 6.0f)]
-    public float speed;
-    public float jumpSpeed;
-    public float rotationSpeed;
-    public float gravity;
-    public int health;
+    [SerializeField] float speed;
+    [SerializeField] float jumpSpeed;
+    [SerializeField] float rotationSpeed;
+    [SerializeField] float gravity;
+    [SerializeField] int health;
 
     Vector3 moveDirection;
 
@@ -28,13 +28,13 @@ public class Character : MonoBehaviour
 
     [Header("Weapon Settings")]
     // Handle weapon shooting
-    public float projectileForce;
-    public Rigidbody projectilePrefab;
-    public Transform projectileSpawnPoint;
+    [SerializeField] float projectileForce;
+    [SerializeField] Rigidbody projectilePrefab;
+    [SerializeField] Transform projectileSpawnPoint;
 
     [Header("Raycast Settings")]
-    public Transform thingToLookFrom;
-    public float lookDistance;
+    [SerializeField] Transform thingToLookFrom;
+    [SerializeField] float lookDistance;
 
     bool debugLog = false;
 

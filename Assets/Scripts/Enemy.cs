@@ -12,20 +12,24 @@ public class Enemy : Subject, IObserver
     [SerializeField] EnemyState enemyState;
 
     [Header("Enemy Setttings")]
-    public Transform player;
-    public float aggroDistance;
-    public float speed;
+    [Space(5)]
+    [SerializeField] Transform player;
+    [SerializeField] float aggroDistance;
+    [SerializeField] float speed;
     bool isAlerted = false;
+    bool isLooking = false;
 
     [Header("Weapon Settings")]
-    public float projectileFireRate;
-    public float projectileForce;
-    public Rigidbody projectilePrefab;
-    public Transform projectileSpawnPoint;
+    [Space(5)]
+    [SerializeField] float projectileFireRate;
+    [SerializeField] float projectileForce;
+    [SerializeField] Rigidbody projectilePrefab;
+    [SerializeField] Transform projectileSpawnPoint;
     float timeSinceLastFire = 0f;
     bool isShooting = false;
 
     [Header("Patrol Settings")]
+    [Space(5)]
     public List<Transform> patrolPoints = new List<Transform>();
     public List<Transform> randomPoints = new List<Transform>();
 
@@ -42,7 +46,7 @@ public class Enemy : Subject, IObserver
 
         if (aggroDistance <= 0)
         {
-            aggroDistance = 20.0f;
+            aggroDistance = 10.0f;
             if (debugLog)
                 Debug.Log("Enemy AggroDistance not set on " + name + " defaulting to " + aggroDistance);
         }
@@ -80,22 +84,16 @@ public class Enemy : Subject, IObserver
         for (int i = 0; i < randomPoints.Count; i++)
         {
             if (i == randomPoints.Count - 1)
-            {
                 patrolGraph.AddEdge(randomPoints[i], randomPoints[0]);
-            }
             else
-            {
                 patrolGraph.AddEdge(randomPoints[i], randomPoints[i + 1]);
-            }
         }
 
         currentTarget = patrolGraph.FindNode(randomPoints[0]).GetData();
 
         enemyReference = FindObjectsOfType<Enemy>();
         for (int i = 0; i < enemyReference.Length; i++)
-        {
             Attach(enemyReference[i]);
-        }
     }
 
     // Update is called once per frame
@@ -104,18 +102,27 @@ public class Enemy : Subject, IObserver
         Vector3 position = Vector3.MoveTowards(transform.position, currentTarget.position, speed * Time.deltaTime);
         Vector3 playerPosition = Vector3.MoveTowards(transform.position, player.transform.position, speed * Time.deltaTime);
 
-        // points towards the player
-        transform.LookAt(player.transform.position);
 
         // patrols the points
         if (currentTarget && !isAlerted)
             enemyState = EnemyState.Patrol;
 
+        if (isAlerted && (Vector3.Distance(transform.position, player.position) <= aggroDistance))
+            FocusPlayer();
+        else
+            isLooking = false;
+
         // has been alerted by the player
         if (isAlerted && (Vector3.Distance(transform.position, player.position) > aggroDistance))
+        {
             enemyState = EnemyState.Chase;
+            AlertStatusRed();
+        }
         else if (isAlerted && (Vector3.Distance(transform.position, player.position) <= aggroDistance))
+        {
             enemyState = EnemyState.Attack;
+            AlertStatusRed();
+        }
 
         if (enemyState == EnemyState.Chase)
             rigidbody.MovePosition(playerPosition);
@@ -123,12 +130,10 @@ public class Enemy : Subject, IObserver
             rigidbody.MovePosition(position);
         else if (enemyState == EnemyState.Attack)
         {
-            isShooting = true;
-
-            if (Time.time >= timeSinceLastFire + projectileFireRate)
+            if (Time.time >= timeSinceLastFire && isShooting)
             {
-                    timeSinceLastFire = Time.time;
-                    fire();
+                timeSinceLastFire = Time.time + projectileFireRate;
+                Fire();
             }
         }
     }
@@ -152,7 +157,7 @@ public class Enemy : Subject, IObserver
         enemyState = EnemyState.Chase;
     }
 
-    public void fire()
+    public void Fire()
     {
         Debug.Log("Incoming Attack from an Enemy!");
 
@@ -167,5 +172,19 @@ public class Enemy : Subject, IObserver
             // Destroy Projectile after 2.0s
             Destroy(temp.gameObject, 2.0f);
         }
+    }
+
+    public void AlertStatusRed()
+    {
+        FocusPlayer();
+        isShooting = true;
+        aggroDistance = 20.0f;
+    }
+
+    public void FocusPlayer()
+    {
+        isLooking = true;
+        // points towards the player
+        transform.LookAt(player.transform.position);
     }
 }
